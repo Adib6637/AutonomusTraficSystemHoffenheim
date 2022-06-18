@@ -1,0 +1,229 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE nta PUBLIC '-//Uppaal Team//DTD Flat System 1.1//EN' 'http://www.it.uu.se/research/group/darts/uppaal/flat-1_2.dtd'>
+<nta>
+	<declaration>const int allowed = 0;
+const int t_arrival = 1;
+const int leave = 2;
+
+chan lock_resource, unlock_resource, wait, signal,request;
+
+int queue_size = 0;//number of car in queue
+
+clock timeA;
+int carA[3];//allowed, t_arrival,leave
+
+clock timeB;
+int carB[3];//allowed, t_arrival,leave
+
+
+
+
+
+
+
+
+
+int queue_state = 0;
+ 
+
+
+
+// Place global declarations here.
+int car_leave_1=0;
+
+int requested_=0;</declaration>
+	<template>
+		<name>car</name>
+		<parameter>int &amp;car_[3], clock &amp;time_</parameter>
+		<location id="id0" x="-68" y="-76">
+			<name x="-102" y="-110">requesting</name>
+		</location>
+		<location id="id1" x="127" y="17">
+			<name x="144" y="9">move</name>
+			<label kind="invariant" x="136" y="25">time_ &lt;= 2000</label>
+		</location>
+		<location id="id2" x="51" y="76">
+			<name x="34" y="93">leaving</name>
+		</location>
+		<location id="id3" x="-238" y="-76">
+			<name x="-247" y="-110">idle</name>
+		</location>
+		<location id="id4" x="-238" y="76">
+			<name x="-248" y="42">gone</name>
+		</location>
+		<init ref="id3"/>
+		<transition>
+			<source ref="id2"/>
+			<target ref="id4"/>
+			<label kind="assignment" x="-204" y="85">car_[allowed] :=0, car_[leave]:= 1</label>
+		</transition>
+		<transition>
+			<source ref="id3"/>
+			<target ref="id0"/>
+			<label kind="synchronisation" x="-178" y="-110">request!</label>
+		</transition>
+		<transition>
+			<source ref="id1"/>
+			<target ref="id2"/>
+		</transition>
+		<transition>
+			<source ref="id0"/>
+			<target ref="id1"/>
+			<label kind="guard" x="102" y="-93">car_[allowed] == 1</label>
+			<label kind="assignment" x="110" y="-76">time_ := 0</label>
+			<nail x="34" y="-76"/>
+			<nail x="93" y="-60"/>
+		</transition>
+	</template>
+	<template>
+		<name x="5" y="5">put_car_queue</name>
+		<declaration>// Place local declarations here.</declaration>
+		<location id="id5" x="-34" y="136">
+			<name x="-85" y="128">idle</name>
+		</location>
+		<location id="id6" x="110" y="136">
+			<name x="127" y="127">update</name>
+		</location>
+		<location id="id7" x="34" y="17">
+			<name x="17" y="-25">waiting</name>
+		</location>
+		<init ref="id5"/>
+		<transition>
+			<source ref="id7"/>
+			<target ref="id6"/>
+			<label kind="synchronisation" x="84" y="60">wait!</label>
+			<nail x="76" y="85"/>
+		</transition>
+		<transition>
+			<source ref="id5"/>
+			<target ref="id7"/>
+			<label kind="synchronisation" x="-60" y="51">request?</label>
+			<nail x="0" y="77"/>
+		</transition>
+		<transition>
+			<source ref="id6"/>
+			<target ref="id5"/>
+			<label kind="synchronisation" x="17" y="136">signal!</label>
+			<label kind="assignment" x="-43" y="162">queue_size := queue_size + 1</label>
+			<nail x="59" y="136"/>
+			<nail x="-17" y="136"/>
+		</transition>
+	</template>
+	<template>
+		<name>car_queue</name>
+		<location id="id8" x="-195" y="-76">
+			<name x="-238" y="-84">idle</name>
+		</location>
+		<location id="id9" x="-102" y="-76">
+			<name x="-85" y="-85">busy</name>
+		</location>
+		<init ref="id8"/>
+		<transition>
+			<source ref="id9"/>
+			<target ref="id8"/>
+			<label kind="synchronisation" x="-170" y="-25">signal?</label>
+			<nail x="-102" y="-25"/>
+			<nail x="-195" y="-25"/>
+		</transition>
+		<transition>
+			<source ref="id8"/>
+			<target ref="id9"/>
+			<label kind="synchronisation" x="-161" y="-153">wait?</label>
+			<nail x="-195" y="-127"/>
+			<nail x="-102" y="-127"/>
+		</transition>
+	</template>
+	<template>
+		<name>resource_manager</name>
+		<parameter>int &amp;car_[3]</parameter>
+		<location id="id10" x="-187" y="-119">
+			<name x="-263" y="-127">listening</name>
+		</location>
+		<location id="id11" x="-85" y="-170">
+			<name x="-111" y="-161">choose</name>
+		</location>
+		<location id="id12" x="8" y="-110">
+			<name x="33" y="-119">checking</name>
+		</location>
+		<location id="id13" x="-93" y="42">
+			<name x="-119" y="67">allocate</name>
+		</location>
+		<location id="id14" x="-187" y="-17">
+			<name x="-238" y="-25">reset</name>
+		</location>
+		<location id="id15" x="8" y="-17">
+		</location>
+		<init ref="id10"/>
+		<transition>
+			<source ref="id15"/>
+			<target ref="id13"/>
+			<label kind="assignment" x="-42" y="17">car_[allowed]:=1</label>
+		</transition>
+		<transition>
+			<source ref="id12"/>
+			<target ref="id15"/>
+			<label kind="synchronisation" x="25" y="-68">lock_resource!</label>
+		</transition>
+		<transition>
+			<source ref="id13"/>
+			<target ref="id14"/>
+			<label kind="guard" x="-238" y="17">car_[leave]== 1</label>
+		</transition>
+		<transition>
+			<source ref="id14"/>
+			<target ref="id10"/>
+			<label kind="synchronisation" x="-306" y="-76">unlock_resource!</label>
+		</transition>
+		<transition>
+			<source ref="id11"/>
+			<target ref="id12"/>
+			<label kind="synchronisation" x="-25" y="-161">signal!</label>
+			<nail x="-42" y="-144"/>
+		</transition>
+		<transition>
+			<source ref="id10"/>
+			<target ref="id11"/>
+			<label kind="guard" x="-263" y="-178">queue_size &gt; 0</label>
+			<label kind="synchronisation" x="-204" y="-195">wait!</label>
+			<label kind="assignment" x="-331" y="-161">queue_size :=queue_size -1</label>
+			<nail x="-153" y="-136"/>
+		</transition>
+	</template>
+	<template>
+		<name>resources</name>
+		<location id="id16" x="-119" y="-25">
+			<name x="-196" y="-42">unlocked</name>
+		</location>
+		<location id="id17" x="34" y="-25">
+			<name x="51" y="-42">locked</name>
+		</location>
+		<init ref="id16"/>
+		<transition>
+			<source ref="id17"/>
+			<target ref="id16"/>
+			<label kind="synchronisation" x="-102" y="17">unlock_resource?</label>
+			<nail x="34" y="8"/>
+			<nail x="-119" y="8"/>
+		</transition>
+		<transition>
+			<source ref="id16"/>
+			<target ref="id17"/>
+			<label kind="synchronisation" x="-85" y="-85">lock_resource?</label>
+			<nail x="-119" y="-59"/>
+			<nail x="34" y="-59"/>
+		</transition>
+	</template>
+	<system>
+car1 = car(carA,timeA);
+car2 = car(carB,timeB);
+manager1 =resource_manager(carA);
+manager2 =resource_manager(carB);
+system car1,car2,put_car_queue,car_queue,manager1,manager2,resources;
+    </system>
+	<queries>
+		<query>
+			<formula></formula>
+			<comment></comment>
+		</query>
+	</queries>
+</nta>
